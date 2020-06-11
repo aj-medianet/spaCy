@@ -30,22 +30,32 @@ Match a dependency path of the supplied pattern in the `Doc`.
 > #### Example
 >
 > ```python
+> import spacy 
 > from spacy.matcher import DependencyMatcher
 > from spacy.pipeline import merge_entities
-> 
-> nlp = spacy.load("en_core_web_sm")
+>
+> nlp = spacy.load('en_core_web_sm') 
 > nlp.add_pipe(merge_entities)
-> 
-> pattern = [
->        {"SPEC": {"NODE_NAME": "founded"}, "PATTERN": {"ORTH": "founded"}}
-> ]
+>
+> pattern = [{'SPEC': {'NODE_NAME': 'founded'}, 'PATTERN': {'ORTH': 'founded'}},
+>            {'SPEC': {'NODE_NAME': 'START_ENTITY', 'NBOR_RELOP': '>', 'NBOR_NAME': 'founded'},
+>             'PATTERN': {'DEP': 'nsubj', 'ENT_TYPE': {'NOT_IN': ['']}}},
+>            {'SPEC': {'NODE_NAME': 'END_ENTITY', 'NBOR_RELOP': '>', 'NBOR_NAME': 'founded'},
+>             'PATTERN': {'DEP': 'dobj', 'ENT_TYPE': {'NOT_IN': ['']}}}]
+>
 > matcher = DependencyMatcher(nlp.vocab)
 > matcher.add("pattern1", None, pattern)
-> 
-> doc = nlp("Bill Gates, the Seattle Seahawks owner, founded Microsoft.")
-> 
-> match = matcher(doc)[0]
+>
+> doc1 = nlp("Bill Gates founded Microsoft.")
+> doc2 = nlp("Bill Gates, the Seattle Seahawks owner, founded Microsoft.")
+>
+> match = matcher(doc1)[0]
 > subtree = match[1][0]
+> print("Subtree:", subtree)  # prints -> Subtree: [1, 0, 2]
+>
+> match = matcher(doc2)[0]
+> subtree = match[1][0]
+> print("Subtree:", subtree)  # prints -> Subtree: [6, 0, 7]
 > ```
 
 | Name        | Type  | Description                                                                                                                                                              |
@@ -101,7 +111,14 @@ overwritten.
 > #### Example
 >
 > ```python
-> # TODO
+> def on_match(matcher, doc, id, matches):
+>      print('Matched!', matches)
+> 
+> matcher = DependencyMatcher(nlp.vocab)
+> matcher.add("HelloWorld", on_match, [{"LOWER": "hello"}, {"LOWER": "world"}])
+> matcher.add("GoogleMaps", on_match, [{"ORTH": "Google"}, {"ORTH": "Maps"}])
+> doc = nlp("HELLO WORLD on Google Maps.")
+> matches = matcher(doc) 
 > ```
 
 | Name        | Type               | Description                                                                                   |
